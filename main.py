@@ -7,12 +7,15 @@ Created on Tue Mar 28 13:37:18 2023
 
 import fitchScrape
 import moodyScrape
+import processText
 import pandas as pd
+import pickle
 
 df = pd.read_csv('downgrade-reports.csv')
 
 # columns to be added
-rawText = []
+rawText = [""] * (len(df))
+textList = []
 
 for ind in df.index:
     print(ind + 1)
@@ -23,13 +26,23 @@ for ind in df.index:
     # scraping raw text
     if ratingAgency == "Fitch":
         text = fitchScrape.fitchscrape(link)        
-    elif ratingAgency == "Moody":
-        text = moodyScrape.moodyscrape(link) 
+    if ratingAgency == "Moody":
+       text = moodyScrape.moodyscrape(link) 
 
-    rawText.append(str(text))
-
-df['RawText'] = rawText
-
-# UPDATE: add BoW here
-
+    rawText[ind] = str(text)
+    df.assign(domain=rawText)
+    
+    # processed list of texts
+    processedText = processText.processtext(text)
+    textList.append(processedText)
+    
+    # BoW
+    # bowText = bagOfWords.bagofwords(text) 
+    # bow[ind] = bowText
+    # df.assign(domain=bow)
+  
+# saving data    
 df.to_csv('downgrade-reports.csv')
+with open('text-list.pickle', 'wb') as myfile:
+    pickle.dump(textList, myfile, pickle.HIGHEST_PROTOCOL)
+myfile.close()
