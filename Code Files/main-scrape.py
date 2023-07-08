@@ -11,11 +11,12 @@ import processText
 import pandas as pd
 import pickle
 
-df = pd.read_csv('downgrade-reports.csv')
+df = pd.read_csv('downgrade-reports-test.csv')
 
 # columns to be added
 rawText = [""] * (len(df))
 textList = []
+existing_dic = set()
 
 for ind in df.index:
     print(ind + 1)
@@ -30,19 +31,19 @@ for ind in df.index:
        text = moodyScrape.moodyscrape(link) 
 
     rawText[ind] = str(text)
-    df.assign(domain=rawText)
     
     # processed list of texts
-    processedText = processText.processtext(text)
+    processedText, existing_dic = processText.processtext(text, existing_dic)
     textList.append(processedText)
-    
-    # BoW
-    # bowText = bagOfWords.bagofwords(text) 
-    # bow[ind] = bowText
-    # df.assign(domain=bow)
-  
+
+df.assign(domain=rawText)    
+
 # saving data    
 df.to_csv('downgrade-reports.csv')
 with open('text-list.pickle', 'wb') as myfile:
     pickle.dump(textList, myfile, pickle.HIGHEST_PROTOCOL)
+myfile.close()
+
+with open('existing-dic.pickle', 'wb') as myfile:
+    pickle.dump(existing_dic, myfile, pickle.HIGHEST_PROTOCOL)
 myfile.close()
